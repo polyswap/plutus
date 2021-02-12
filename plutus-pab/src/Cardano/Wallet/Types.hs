@@ -10,7 +10,8 @@
 module Cardano.Wallet.Types (
      -- * effect type for the mock wallet
       WalletEffects
-
+    , WalletId
+    , Wallets (..)
      -- * wallet configuration
     , WalletConfig (..)
 
@@ -29,9 +30,11 @@ import           Control.Monad.Freer.Error          (Error)
 import           Control.Monad.Freer.Extras.Log     (LogMsg)
 import           Control.Monad.Freer.State          (State)
 import           Data.Aeson                         (FromJSON, ToJSON)
+import           Data.Map.Strict                    (Map)
 import           Data.Text                          (Text)
 import           Data.Text.Prettyprint.Doc          (Pretty (..), (<+>))
 import           GHC.Generics                       (Generic)
+import           Ledger                             (PrivateKey, PubKeyHash)
 import           Servant                            (ServerError (..))
 import           Servant.Client                     (BaseUrl, ClientError)
 
@@ -40,14 +43,20 @@ import           Cardano.BM.Data.Tracer.Extras      (Tagged (..), mkObjectStr)
 import           Cardano.ChainIndex.Types           (ChainIndexUrl)
 import           Plutus.PAB.Arbitrary               ()
 import           Servant.Client.Internal.HttpClient (ClientEnv)
-import           Wallet.Effects                     (ChainIndexEffect, NodeClientEffect, WalletEffect)
+import           Wallet.Effects                     (ChainIndexEffect, MultiWalletEffect, NodeClientEffect)
 import           Wallet.Emulator.Error              (WalletAPIError)
 import           Wallet.Emulator.Wallet             (Wallet, WalletState)
 
-type WalletEffects m = '[ WalletEffect
+type WalletId = Integer
+data Wallets = Wallets
+    { widToPrivateKey :: Map WalletId (Wallet, PrivateKey)
+    , pkhToPrivateKey :: Map PubKeyHash (Wallet, PrivateKey)
+    }
+
+type WalletEffects m = '[ MultiWalletEffect
                         , NodeClientEffect
                         , ChainIndexEffect
-                        , State WalletState
+                        , State Wallets
                         , LogMsg Text
                         , Error WalletAPIError
                         , Error ClientError
