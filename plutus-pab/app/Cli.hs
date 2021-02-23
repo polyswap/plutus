@@ -61,7 +61,6 @@ import           Cardano.BM.Data.Trace                           (Trace)
 import qualified Cardano.ChainIndex.Server                       as ChainIndex
 import qualified Cardano.Metadata.Server                         as Metadata
 import qualified Cardano.Node.Server                             as NodeServer
-import qualified Cardano.SigningProcess.Server                   as SigningProcess
 import qualified Cardano.Wallet.Server                           as WalletServer
 import           Cardano.Wallet.Types
 import           Control.Concurrent                              (threadDelay)
@@ -93,12 +92,11 @@ import qualified Plutus.PAB.Core.ContractInstance                as Instance
 import           Plutus.PAB.Events.Contract                      (ContractInstanceId (..))
 import           Plutus.PAB.PABLogMsg                            (AppMsg (..), ChainIndexServerMsg,
                                                                   ContractExeLogMsg (..), MetadataLogMessage,
-                                                                  MockServerLogMsg, PABLogMsg (..), SigningProcessMsg)
+                                                                  MockServerLogMsg, PABLogMsg (..))
 import           Plutus.PAB.Types                                (Config (Config), ContractExe (..), PABError,
                                                                   RequestProcessingConfig (..), chainIndexConfig,
                                                                   metadataServerConfig, nodeServerConfig,
-                                                                  requestProcessingConfig, signingProcessConfig,
-                                                                  walletServerConfig)
+                                                                  requestProcessingConfig, walletServerConfig)
 import qualified Plutus.PAB.Webserver.Server                     as PABServer
 
 -- | Interpret a 'Command' in 'Eff' using the provided tracer and configurations
@@ -168,14 +166,6 @@ runCliCommand t _ Config {nodeServerConfig, chainIndexConfig} serviceAvailabilit
         (toChainIndexLog t)
         chainIndexConfig
         (mscBaseUrl nodeServerConfig)
-        serviceAvailability
-
-
--- Run the signing-process service
-runCliCommand t _ Config {signingProcessConfig} serviceAvailability SigningProcess =
-    liftIO $ SigningProcess.main
-        (toSigningProcessLog t)
-        signingProcessConfig
         serviceAvailability
 
 -- Install a contract
@@ -258,9 +248,6 @@ toPABMsg = convertLog PABMsg
 
 toChainIndexLog :: Trace m AppMsg -> Trace m ChainIndexServerMsg
 toChainIndexLog = convertLog $ PABMsg . SChainIndexServerMsg
-
-toSigningProcessLog :: Trace m AppMsg -> Trace m SigningProcessMsg
-toSigningProcessLog = convertLog $ PABMsg . SSigningProcessMsg
 
 toWalletLog :: Trace m AppMsg -> Trace m WalletMsg
 toWalletLog = convertLog $ PABMsg . SWalletMsg
