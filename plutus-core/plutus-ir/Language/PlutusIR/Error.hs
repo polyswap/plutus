@@ -81,7 +81,8 @@ instance (PrettyUni uni ann, Pretty fun) => Show (Error uni fun ann) where
     show = show . PP.pretty
 
 -- FIXME: we get rid of this when our TestLib stops using rethrow
-instance (PrettyUni uni ann, Typeable uni, Typeable fun, Typeable ann, Pretty fun) => Exception (Error uni fun ann)
+deriving anyclass instance
+    (PrettyUni uni ann, Typeable uni, Typeable fun, Typeable ann, Pretty fun) => Exception (Error uni fun ann)
 
 instance
         (Pretty ann, Pretty fun,
