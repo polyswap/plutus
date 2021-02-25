@@ -14,24 +14,24 @@ module Cardano.ChainIndex.Server(
     , syncState
     ) where
 
-import           Control.Concurrent              (forkIO)
-import           Control.Concurrent.MVar         (MVar, newMVar)
-import           Control.Monad                   (void)
+import           Control.Concurrent               (forkIO)
+import           Control.Concurrent.MVar          (MVar, newMVar)
+import           Control.Monad                    (void)
 import           Control.Monad.Freer.Extras.Log
-import           Control.Monad.IO.Class          (MonadIO (..))
-import           Data.Function                   ((&))
-import           Data.Proxy                      (Proxy (Proxy))
-import           Network.HTTP.Client             (defaultManagerSettings, newManager)
-import qualified Network.Wai.Handler.Warp        as Warp
-import           Servant                         (Application, hoistServer, serve, (:<|>) ((:<|>)))
-import           Servant.Client                  (BaseUrl (baseUrlPort), mkClientEnv)
+import           Control.Monad.IO.Class           (MonadIO (..))
+import           Data.Function                    ((&))
+import           Data.Proxy                       (Proxy (Proxy))
+import           Network.HTTP.Client              (defaultManagerSettings, newManager)
+import qualified Network.Wai.Handler.Warp         as Warp
+import           Servant                          (Application, hoistServer, serve, (:<|>) ((:<|>)))
+import           Servant.Client                   (BaseUrl (baseUrlPort), mkClientEnv)
 
 import           Cardano.ChainIndex.API
 import           Cardano.ChainIndex.Types
-import           Control.Concurrent.Availability (Availability, available)
-import           Data.Coerce                     (coerce)
-import           Plutus.PAB.Monitoring           (runLogEffects)
-import qualified Wallet.Effects                  as WalletEffects
+import           Control.Concurrent.Availability  (Availability, available)
+import           Data.Coerce                      (coerce)
+import qualified Plutus.PAB.Monitoring.Monitoring as LM
+import qualified Wallet.Effects                   as WalletEffects
 
 import           Cardano.ChainIndex.ChainIndex
 
@@ -48,12 +48,12 @@ app trace stateVar =
         (healthcheck :<|> startWatching :<|> watchedAddresses :<|> confirmedBlocks :<|> WalletEffects.transactionConfirmed :<|> WalletEffects.nextTx)
 
 main :: ChainIndexTrace -> ChainIndexConfig -> BaseUrl -> Availability -> IO ()
-main trace ChainIndexConfig{ciBaseUrl} nodeBaseUrl availability = runLogEffects trace $ do
+main trace ChainIndexConfig{ciBaseUrl} nodeBaseUrl availability = LM.runLogEffects trace $ do
     nodeClientEnv <- liftIO getNode
     mVarState <- liftIO $ newMVar initialAppState
 
     logInfo StartingNodeClientThread
-    void $ liftIO $ forkIO $ runLogEffects trace $ updateThread trace 10 mVarState nodeClientEnv
+    void $ liftIO $ forkIO $ LM.runLogEffects trace $ updateThread trace 10 mVarState nodeClientEnv
 
     logInfo $ StartingChainIndex servicePort
     liftIO $ Warp.runSettings warpSettings $ app trace mVarState

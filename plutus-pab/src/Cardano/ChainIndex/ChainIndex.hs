@@ -38,7 +38,7 @@ import           Cardano.ChainIndex.Types
 import qualified Cardano.Node.Client              as NodeClient
 import           Ledger.Address                   (Address)
 import           Ledger.AddressMap                (AddressMap)
-import           Plutus.PAB.Monitoring            (convertLog, handleLogMsgTrace)
+import           Plutus.PAB.Monitoring.Monitoring (convertLog, handleLogMsgTrace)
 import           Wallet.Effects                   (ChainIndexEffect)
 import qualified Wallet.Effects                   as WalletEffects
 import           Wallet.Emulator.ChainIndex       (ChainIndexControlEffect, ChainIndexEvent)

@@ -36,7 +36,7 @@ import qualified Cardano.Protocol.Socket.Server    as Server
 import           Ledger                            (Slot, Tx)
 import           Ledger.Tx                         (outputs)
 import           Plutus.PAB.Arbitrary              ()
-import           Plutus.PAB.Monitoring             (handleLogMsgTrace, runLogEffects)
+import qualified Plutus.PAB.Monitoring.Monitoring  as LM
 import qualified Wallet.Emulator                   as EM
 import           Wallet.Emulator.Chain             (ChainControlEffect, ChainEffect, ChainState)
 import qualified Wallet.Emulator.Chain             as Chain
@@ -90,7 +90,7 @@ runChainEffects trace serverHandler clientHandler stateVar eff = do
             & mergeState
             & toWriter
             & runReaders oldAppState
-            & handleLogMsgTrace trace
+            & LM.handleLogMsgTrace trace
             & runM
     liftIO $ putMVar stateVar newState
     pure (events, a)
@@ -118,7 +118,7 @@ processChainEffects ::
     -> IO a
 processChainEffects trace serverHandler clientHandler stateVar eff = do
     (events, result) <- liftIO $ runChainEffects trace serverHandler clientHandler stateVar eff
-    runLogEffects trace $ traverse_ (\(LogMessage _ chainEvent) -> logDebug chainEvent) events
+    LM.runLogEffects trace $ traverse_ (\(LogMessage _ chainEvent) -> logDebug chainEvent) events
     liftIO $
         modifyMVar_
             stateVar
